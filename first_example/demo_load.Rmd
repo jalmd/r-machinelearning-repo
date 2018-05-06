@@ -1,0 +1,110 @@
+---
+title: "flowLearn training/test data for IMPC"
+output:
+    pdf_document
+---
+
+This worksheet demonstrates the use of training and test data for the IMPC bone marrow panel. The
+data is organized into one .rmd file per sample. Each file contains a list of gates with each gate
+having densities (using different granularities), threshold values, and a list of booleans
+indicating the events belonging to the gated population.
+
+# Libraries and functions
+
+```{r}
+source("functions.R")
+```
+
+# Parameters
+
+Granularities were calculated for $granularity \in \{8, 16, 32, 64, 128, 256, 512\}$ features
+
+```{r}
+# Granularity of the density, i.e. number of features
+granularity <- "64"
+
+# Population of interest
+population <- "NOT(Plasma)"
+```
+
+# Loading data
+
+One file per sample, meaning one file corresponds to one training vector.
+
+```{r}
+# Path to training files
+dirName <- 'trainingFiles'
+sampleName <- 'BM 8,2f,24,2f,15_L000096187_016.labelled'
+sample <- readRDS(paste(dirName, '/', sampleName, '.rds', sep = ''))
+```
+
+# Accessing data
+
+The loaded sample contains a list with a number of fields named by the gated population.
+
+```{r}
+# Print list of populations
+print(names(sample))
+```
+
+Each list entry contains a object of class TrainingGate.
+
+```{r}
+print(class(sample[[population]]))
+```
+
+The slots are:
+
+```{r}
+print(slotNames("TrainingGate"))
+```
+
+- \texttt{parentName}: Name of the parent population
+
+- \texttt{channelA}: Index of the first channel (A)
+
+- \texttt{channelB}: Index of the second channel (B)
+
+- \texttt{thresholdALow}: Low threshold of the channel A. The threshold might be \texttt{NaN}
+  indicating that only one or no threshold was used for gating the population using this channel.
+
+- \texttt{thresholdAHigh}: High threshold of the channel A. The threshold might be \texttt{NaN}
+  indicating that only one or no threshold was used for gating the population using this channel.
+
+- \texttt{thresholdBLow}: Low threshold of the channel B. The threshold might be \texttt{NaN}
+  indicating that only one or no threshold was used for gating the population using this channel.
+
+- \texttt{thresholdBHigh}: High threshold of the channel B. The threshold might be \texttt{NaN}
+  indicating that only one or no threshold was used for gating the population using this channel.
+
+- \texttt{negate}: TRUE if the population was negated, meaning that not the gated population is of interest
+  but everything else
+
+- \texttt{gateAssignments}: List of logicals with length = number of events, where each entry is TRUE if the
+  event belongs to the population of interest
+
+- \texttt{densitiesA}: A list with calculated densities for channel A for different granularities. Each entry
+  is the returned value of Rs density function.
+
+- \texttt{densitiesB}: A list with calculated densities for channel B for different granularities. Each entry
+  is the returned value of Rs density function.
+
+# Plotting densities and thresholds
+
+I provided a convenience function for plotting the densities of channel A and B for one particular
+gate. Have a look at this function to know how to use the different low and high threshold values.
+
+```{r fig.height = 7}
+plotGate(sample[[population]], granularity)
+```
+
+# Accessing density data
+
+For each granularity, there is a density object containing different fields. The most important
+fields are \texttt{x} and \texttt{y} describing the density distribution.
+
+```{r}
+x <- sample[[population]]@densitiesA[[granularity]]$x
+y <- sample[[population]]@densitiesA[[granularity]]$y
+```
+
